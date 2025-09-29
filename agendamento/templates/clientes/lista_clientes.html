@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lista de Clientes</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        .btn { padding: 10px 15px; background: #007bff; color: white; 
+               text-decoration: none; border-radius: 5px; margin: 5px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #f5f5f5; }
+    </style>
+</head>
+<body>
+    <h1>👥 Lista de Clientes</h1>
+    
+    <a href="{% url 'novo_cliente' %}" class="btn">➕ Novo Cliente</a>
+    <a href="/" class="btn">🏠 Menu Principal</a>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Telefone</th>
+                <th>Email</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cliente in clientes %}
+            <tr>
+                <td>{{ cliente.nome }}</td>
+                <td>{{ cliente.telefone }}</td>
+                <td>{{ cliente.email|default:"-" }}</td>
+                <td>
+                    <a href="{% url 'editar_cliente' cliente.id %}" class="btn">✏️ Editar</a>
+                    <a href="{% url 'excluir_cliente' cliente.id %}" class="btn" 
+                       onclick="return confirm('Tem certeza?')">🗑️ Excluir</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">Nenhum cliente cadastrado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

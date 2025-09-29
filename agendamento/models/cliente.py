@@ -10,7 +10,9 @@ class Clientes(models.Model):
     )
 
     cpf = models.CharField(
-        max_length=11
+        max_length=11,
+        unique=True,
+        null=True
     )
 
     data_nascimento = models.DateField()

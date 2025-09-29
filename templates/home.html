@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sistema de Agendamento</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .menu-section { margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 5px; }
+        .btn { 
+            display: inline-block; 
+            padding: 12px 24px; 
+            margin: 5px; 
+            background: #007bff; 
+            color: white; 
+            text-decoration: none; 
+            border-radius: 5px; 
+            border: none;
+            cursor: pointer;
+        }
+        .btn:hover { background: #0056b3; }
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #1e7e34; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-warning:hover { background: #e0a800; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏟️ Sistema de Agendamento de Quadras</h1>
+        
+        <div class="menu-section">
+            <h2>👥 Clientes</h2>
+            <a href="/sistema/clientes/" class="btn">📋 Listar Clientes</a>
+            <a href="/sistema/clientes/novo/" class="btn btn-success">➕ Novo Cliente</a>
+        </div>
+
+        <div class="menu-section">
+            <h2>🏟️ Quadras</h2>
+            <a href="/sistema/quadras/" class="btn">📋 Listar Quadras</a>
+            <a href="/sistema/quadras/novo/" class="btn btn-success">➕ Nova Quadra</a>
+        </div>
+
+        <div class="menu-section">
+            <h2>📅 Agendamentos</h2>
+            <a href="/sistema/agendamentos/" class="btn">📋 Listar Agendamentos</a>
+            <a href="/sistema/agendamentos/novo/" class="btn btn-success">➕ Novo Agendamento</a>
+        </div>
+
+        <div class="menu-section">
+            <h2>⚙️ Administração</h2>
+            <a href="/admin/" class="btn btn-warning">🔧 Painel Admin Completo</a>
+        </div>
+    </div>
+</body>
+</html>
