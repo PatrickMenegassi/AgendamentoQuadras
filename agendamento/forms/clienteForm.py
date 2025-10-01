@@ -2,7 +2,10 @@ from django import forms
 from ..models import Clientes
 
 class ClientesForm(forms.ModelForm):
-    # DEFININDO TODOS OS CAMPOS EXPLICITAMENTE
+    class Meta:
+        model = Clientes
+        fields = ['nome', 'telefone', 'cpf', 'data_nascimento', 'email']
+
     nome = forms.CharField(
         label='Nome Completo *',
         max_length=100,
@@ -92,9 +95,6 @@ class ClientesForm(forms.ModelForm):
         })
     )
     
-    class Meta:
-        model = Clientes
-        fields = ['nome', 'cpf', 'telefone', 'email', 'data_nascimento', 'endereco', 'ativo']
     
     def clean_cpf(self):
         cpf = self.cleaned_data['cpf']

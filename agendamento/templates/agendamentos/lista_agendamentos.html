@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Calendário de Agendamentos</title>
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+    <style>
+        #calendar {
+            max-width: 1000px;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .fc-event {
+            cursor: pointer;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 400px;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">🏟️ Calendário de Agendamentos</h1>
+    
+    <div id="calendar"></div>
+    
+    <!-- Modal para novo agendamento -->
+    <div id="agendamentoModal" class="modal">
+        <div class="modal-content">
+            <h3>Novo Agendamento</h3>
+            <form id="agendamentoForm">
+                {% csrf_token %}
+                <input type="hidden" id="modal_data">
+                
+                <div class="form-group">
+                    <label>Cliente:</label>
+                    <select name="cliente" id="modal_cliente" class="form-control" required>
+                        <option value="">Selecione o cliente</option>
+                        <!-- Os clientes serão carregados via AJAX -->
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Quadra:</label>
+                    <select name="quadra" id="modal_quadra" class="form-control" required>
+                        <option value="">Selecione a quadra</option>
+                        <!-- As quadras serão carregadas via AJAX -->
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Hora Início:</label>
+                    <input type="time" name="hora_inicio" id="modal_hora_inicio" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Hora Fim:</label>
+                    <input type="time" name="hora_fim" id="modal_hora_fim" class="form-control" required>
+                </div>
+                
+                <button type="submit">✅ Agendar</button>
+                <button type="button" onclick="fecharModal()">❌ Cancelar</button>
+            </form>
+        </div>
+    </div>
+
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/pt-br.js'></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                locale: 'pt-br',
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                events: '/agendamentos/',
+                dateClick: function(info) {
+                    abrirModal(info.dateStr);
+                },
+                eventClick: function(info) {
+                    alert('Agendamento: ' + info.event.title);
+                }
+            });
+            calendar.render();
+        });
+
+        function abrirModal(data) {
+            document.getElementById('modal_data').value = data;
+            document.getElementById('agendamentoModal').style.display = 'block';
+            
+            carregarDadosAgendamento();
+        }
+
+        function fecharModal() {
+            document.getElementById('agendamentoModal').style.display = 'none';
+        }
+
+        function carregarDadosAgendamento() {
+            // Mostra loading enquanto carrega
+            document.getElementById('modal_cliente').innerHTML = '<option value="">Carregando...</option>';
+            document.getElementById('modal_quadra').innerHTML = '<option value="">Carregando...</option>';
+            
+            fetch("{% url 'novo_agendamento' %}")
+                .then(response => response.json())
+                .then(data => {
+                    
+                    const clienteSelect = document.getElementById('modal_cliente');
+                    clienteSelect.innerHTML = '<option value="">Selecione o cliente</option>';
+                    data.clientes.forEach(cliente => {
+                        clienteSelect.innerHTML += `<option value="${cliente.id}">${cliente.nome}</option>`;
+                    });
+                    
+                    // Preenche quadras
+                    const quadraSelect = document.getElementById('modal_quadra');
+                    quadraSelect.innerHTML = '<option value="">Selecione a quadra</option>';
+                    data.quadras.forEach(quadra => {
+                        quadraSelect.innerHTML += `<option value="${quadra.id}">${quadra.nome_quadra} - R$ ${quadra.valor_hora}/hora</option>`;
+                    });
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar dados:', error);
+                    alert('Erro ao carregar dados');
+                });
+        }
+
+        // Fechar modal clicando fora
+        window.onclick = function(event) {
+            var modal = document.getElementById('agendamentoModal');
+            if (event.target == modal) {
+                fecharModal();
+            }
+        }
+    </script>
+</body>
+</html>

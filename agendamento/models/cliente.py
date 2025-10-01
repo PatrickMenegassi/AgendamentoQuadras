@@ -1,6 +1,11 @@
 from django.db import models
+from datetime import datetime
 
 class Clientes(models.Model):
+    class Meta:
+        verbose_name = 'Cliente'
+        verbose_name_plural = 'Clientes'
+    
     nome = models.CharField(
         max_length=100
     )
@@ -35,6 +40,10 @@ class Clientes(models.Model):
     def __str__(self):
         return self.nome
     
-    class Meta:
-        verbose_name = 'Cliente'
-        verbose_name_plural = 'Clientes'
+    def telefone_formatado(self):
+        t = self.telefone
+        if len(t) == 11:
+            return f"({t[:2]}) {t[2:7]}-{t[7:]}"
+    
+    def data_nascimento_formatada(self):
+        return self.data_nascimento.strftime('%d/%m/%Y')

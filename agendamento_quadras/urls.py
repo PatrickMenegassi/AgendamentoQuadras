@@ -23,6 +23,6 @@ def home(request):
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', home, name='home'),
+    path('home/', home, name='home'),
     path('sistema/', include('agendamento.urls')),
 ]

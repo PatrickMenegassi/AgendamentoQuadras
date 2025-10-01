@@ -5,8 +5,26 @@ from ..models import Clientes
 from ..forms import ClientesForm
 
 def lista_clientes(request):
+    # Iniciar com todos os clientes
     clientes = Clientes.objects.all()
-    return render(request, 'clientes/lista_clientes.html', {'clientes': clientes})
+    
+    # Aplicar filtros se existirem na URL
+    nome = request.GET.get('nome')
+    telefone = request.GET.get('telefone') 
+    data_nascimento = request.GET.get('data_nascimento')
+    
+    if nome:
+        clientes = clientes.filter(nome__icontains=nome)
+    if telefone:
+        clientes = clientes.filter(telefone__icontains=telefone)
+    if data_nascimento:
+        clientes = clientes.filter(data_nascimento=data_nascimento)
+    
+    context = {
+        'clientes': clientes,
+    }
+    
+    return render(request, 'clientes/lista_clientes.html', context)
 
 def novo_cliente(request):
     if request.method == 'POST':
