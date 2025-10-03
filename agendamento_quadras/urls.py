@@ -25,4 +25,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('home/', home, name='home'),
     path('sistema/', include('agendamento.urls')),
+    path("", home, name='home_root'),  # Redireciona a raiz para a home
 ]

@@ -1,8 +1,11 @@
+
 <!DOCTYPE html>
 <html>
 <head>
     <title>Calendário de Agendamentos</title>
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
     <style>
         #calendar {
             max-width: 1000px;
@@ -18,7 +21,7 @@
         .modal {
             display: none;
             position: fixed;
-            z-index: 1000;
+            z-index: 10000;
             left: 0;
             top: 0;
             width: 100%;
@@ -27,10 +30,59 @@
         }
         .modal-content {
             background-color: white;
-            margin: 10% auto;
-            padding: 20px;
+            margin: 2% auto;
+            padding: 25px;
             border-radius: 10px;
-            width: 400px;
+            width: 90%; /* Percentual em vez de fixo */
+            max-width: 800px; /* Largura máxima */
+            max-height: 95vh; /* Ocupa quase toda a tela */
+            overflow-y: auto;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        /* Tirar evento do bootstrap*/
+        a {
+            color: inherit !important; 
+            text-decoration: inherit !important; 
+        }
+
+        .evento-calendario {
+            background: white;
+            border-left: 4px solid #007bff;
+            border-radius: 4px;
+            padding: 8px;
+            margin: 2px 0;
+            font-size: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            cursor: pointer;
+        }
+
+        .evento-codigo {
+            font-weight: bold;
+            color: #333;
+            font-size: 11px;
+        }
+
+        .evento-cliente {
+            font-weight: 600;
+            color: #007bff;
+            margin: 2px 0;
+        }
+
+        .evento-horario {
+            color: #666;
+            font-size: 11px;
+        }
+
+        .evento-quadra {
+            color: #28a745;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        /* Para eventos em horários específicos */
+        .evento-calendario.pequeno {
+            padding: 4px;
+            font-size: 10px;
         }
     </style>
 </head>
@@ -39,48 +91,21 @@
     
     <div id="calendar"></div>
     
-    <!-- Modal para novo agendamento -->
-    <div id="agendamentoModal" class="modal">
-        <div class="modal-content">
-            <h3>Novo Agendamento</h3>
-            <form id="agendamentoForm">
-                {% csrf_token %}
-                <input type="hidden" id="modal_data">
-                
-                <div class="form-group">
-                    <label>Cliente:</label>
-                    <select name="cliente" id="modal_cliente" class="form-control" required>
-                        <option value="">Selecione o cliente</option>
-                        <!-- Os clientes serão carregados via AJAX -->
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label>Quadra:</label>
-                    <select name="quadra" id="modal_quadra" class="form-control" required>
-                        <option value="">Selecione a quadra</option>
-                        <!-- As quadras serão carregadas via AJAX -->
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label>Hora Início:</label>
-                    <input type="time" name="hora_inicio" id="modal_hora_inicio" class="form-control" required>
-                </div>
-                
-                <div class="form-group">
-                    <label>Hora Fim:</label>
-                    <input type="time" name="hora_fim" id="modal_hora_fim" class="form-control" required>
-                </div>
-                
-                <button type="submit">✅ Agendar</button>
-                <button type="button" onclick="fecharModal()">❌ Cancelar</button>
-            </form>
+    <!-- Modal Agendamento -->
+    <div class="modal fade" id="agendamentoModal" tabindex="-1" aria-labelledby="agendamentoModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <!-- O conteúdo será carregado via fetch -->
+            </div>
         </div>
     </div>
 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/i18n/pt-BR.js"></script>
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/pt-br.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             var calendarEl = document.getElementById('calendar');
@@ -92,7 +117,7 @@
                     center: 'title',
                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
                 },
-                events: '/agendamentos/',
+                events: 'mostraagendamentos/',
                 dateClick: function(info) {
                     abrirModal(info.dateStr);
                 },
@@ -103,44 +128,69 @@
             calendar.render();
         });
 
-        function abrirModal(data) {
-            document.getElementById('modal_data').value = data;
-            document.getElementById('agendamentoModal').style.display = 'block';
-            
-            carregarDadosAgendamento();
+        function inicializarSelect2() {
+            $('.select2-busca').select2({
+                language: 'pt-BR',
+                width: '100%',
+                placeholder: function() {
+                    return $(this).data('placeholder');
+                },
+                allowClear: true
+            });
         }
+
+        function abrirModal(data) {
+        // Busca o form via fetch
+        fetch(`/sistema/agendamentos/novo/?data=${data}`)
+            .then(response => response.text())
+            .then(html => {
+                // Insere o HTML no modal-content
+                document.querySelector('#agendamentoModal .modal-content').innerHTML = html;
+                
+                // Abre o modal usando Bootstrap
+                var modal = new bootstrap.Modal(document.getElementById('agendamentoModal'));
+                modal.show();
+
+                // Inicializa o Select2 após carregar o form
+                inicializarSelect2();
+            })
+            .catch(error => {
+                console.error('Erro ao carregar form:', error);
+                document.querySelector('#agendamentoModal .modal-content').innerHTML = `
+                    <div class="modal-header">
+                        <h5 class="modal-title">Erro</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        Erro ao carregar formulário
+                    </div>
+                `;
+                var modal = new bootstrap.Modal(document.getElementById('agendamentoModal'));
+                modal.show();
+            });
+        }
+
+        function inicializarSelect2() {
+            // Inicializa todos os campos com classe select2-busca
+            $('.select2-busca').select2({
+                language: 'pt-BR',
+                width: '100%',
+                placeholder: '',
+                allowClear: true,
+                dropdownParent: $('#agendamentoModal') // Importante para funcionar no modal
+            });
+        }
+
+        // Fechar o Select2 quando o modal fechar
+        document.getElementById('agendamentoModal').addEventListener('hidden.bs.modal', function () {
+            $('.select2-busca').select2('destroy');
+        });
 
         function fecharModal() {
-            document.getElementById('agendamentoModal').style.display = 'none';
+            var modal = bootstrap.Modal.getInstance(document.getElementById('agendamentoModal'));
+            modal.hide();
         }
 
-        function carregarDadosAgendamento() {
-            // Mostra loading enquanto carrega
-            document.getElementById('modal_cliente').innerHTML = '<option value="">Carregando...</option>';
-            document.getElementById('modal_quadra').innerHTML = '<option value="">Carregando...</option>';
-            
-            fetch("{% url 'novo_agendamento' %}")
-                .then(response => response.json())
-                .then(data => {
-                    
-                    const clienteSelect = document.getElementById('modal_cliente');
-                    clienteSelect.innerHTML = '<option value="">Selecione o cliente</option>';
-                    data.clientes.forEach(cliente => {
-                        clienteSelect.innerHTML += `<option value="${cliente.id}">${cliente.nome}</option>`;
-                    });
-                    
-                    // Preenche quadras
-                    const quadraSelect = document.getElementById('modal_quadra');
-                    quadraSelect.innerHTML = '<option value="">Selecione a quadra</option>';
-                    data.quadras.forEach(quadra => {
-                        quadraSelect.innerHTML += `<option value="${quadra.id}">${quadra.nome_quadra} - R$ ${quadra.valor_hora}/hora</option>`;
-                    });
-                })
-                .catch(error => {
-                    console.error('Erro ao carregar dados:', error);
-                    alert('Erro ao carregar dados');
-                });
-        }
 
         // Fechar modal clicando fora
         window.onclick = function(event) {
@@ -150,5 +200,7 @@
             }
         }
     </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/i18n/pt-BR.js"></script>
 </body>
 </html>
