@@ -29,5 +29,4 @@ class Agendamento(models.Model):
     class Meta:
         unique_together = [['quadra', 'data', 'hora_inicio']]
 
-    def __str__(self):
-        return f"{self.nome_cliente} - {self.data} {self.hora_inicio}"
+   

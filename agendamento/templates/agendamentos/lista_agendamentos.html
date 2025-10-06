@@ -115,14 +115,20 @@
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                    right: 'dayGridMonth,timeGridDay'
                 },
                 events: 'mostraagendamentos/',
                 dateClick: function(info) {
-                    abrirModal(info.dateStr);
+                    // Depende da forma que está a visualização
+                    if(info.view.type === 'dayGridMonth'){
+                        abrirModal(info.dateStr, null, "novo");
+                    } else {
+                        abrirModal(info.dateStr.split('T')[0], null, "novo");
+                    }
+                    
                 },
                 eventClick: function(info) {
-                    alert('Agendamento: ' + info.event.title);
+                    abrirModal(info.event.startStr.split('T')[0], info.event.id, "editar");
                 }
             });
             calendar.render();
@@ -139,20 +145,50 @@
             });
         }
 
-        function abrirModal(data) {
+        function abrirModal(data, id, tipo) {
+
         // Busca o form via fetch
-        fetch(`/sistema/agendamentos/novo/?data=${data}`)
+        if(tipo == "novo"){
+            fetch(`/sistema/agendamentos/novo/?data=${data}`)
             .then(response => response.text())
             .then(html => {
-                // Insere o HTML no modal-content
                 document.querySelector('#agendamentoModal .modal-content').innerHTML = html;
                 
-                // Abre o modal usando Bootstrap
                 var modal = new bootstrap.Modal(document.getElementById('agendamentoModal'));
                 modal.show();
 
-                // Inicializa o Select2 após carregar o form
                 inicializarSelect2();
+
+                configurarSubmitForm();
+            })
+            .catch(error => {
+                console.error('Erro ao carregar form:', error);
+                document.querySelector('#agendamentoModal .modal-content').innerHTML = `
+                    <div class="modal-header">
+                        <h5 class="modal-title">Erro</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        Erro ao carregar formulário
+                    </div>
+                `;
+                var modal = new bootstrap.Modal(document.getElementById('agendamentoModal'));
+                modal.show();
+            });
+        } else {
+            let url = `/sistema/agendamentos/editar/${id}/`
+            url +=  `?data=${data}`;
+            fetch(url) // Passa o id do agendamento
+            .then(response => response.text())
+            .then(html => {
+                document.querySelector('#agendamentoModal .modal-content').innerHTML = html;
+                
+                var modal = new bootstrap.Modal(document.getElementById('agendamentoModal'));
+                modal.show();
+
+                inicializarSelect2();
+
+                configurarSubmitForm();
             })
             .catch(error => {
                 console.error('Erro ao carregar form:', error);
@@ -169,19 +205,57 @@
                 modal.show();
             });
         }
+        
+        }
+
+        function configurarSubmitForm() {
+            const form = document.querySelector('form');
+            
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const formData = new FormData(this);
+                    
+                    const csrfInput = this.querySelector('input[name="csrfmiddlewaretoken"]');
+                    const csrfToken = csrfInput ? csrfInput.value : '';
+                    
+                    fetch(this.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRFToken': csrfToken
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data.success);
+                        if (data.success) {
+                            var modal = bootstrap.Modal.getInstance(document.getElementById('agendamentoModal'));
+                            modal.hide();
+                            calendar.refetchEvents();
+                        } else {
+                            alert('Erro: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro:', error);
+                        alert('Erro ao enviar formulário');
+                    });
+                });
+            }
+        }
 
         function inicializarSelect2() {
-            // Inicializa todos os campos com classe select2-busca
             $('.select2-busca').select2({
                 language: 'pt-BR',
                 width: '100%',
                 placeholder: '',
                 allowClear: true,
-                dropdownParent: $('#agendamentoModal') // Importante para funcionar no modal
+                dropdownParent: $('#agendamentoModal') 
             });
         }
 
-        // Fechar o Select2 quando o modal fechar
         document.getElementById('agendamentoModal').addEventListener('hidden.bs.modal', function () {
             $('.select2-busca').select2('destroy');
         });

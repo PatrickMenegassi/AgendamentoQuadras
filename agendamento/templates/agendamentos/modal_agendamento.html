@@ -1,12 +1,11 @@
-
 <div class="modal-header">
-    <h5 class="modal-title" id="agendamentoModalLabel">Novo Agendamento - {{ data_selecionada }}</h5>
+    <h5 class="modal-title" id="agendamentoModalLabel">Novo Agendamento - {{ data_titulo }}</h5>
     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
 </div>
 
-<form method="POST">
+<form method="POST" id="agendamentoForm" action="{% if agendamento.id %}{% url 'editar_agendamento' agendamento.id %}{% else %}{% url 'novo_agendamento' %}{% endif %}">
     <div class="modal-body">
-        {% csrf_token %}
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
         <input type="hidden" name="data" value="{{ data_selecionada }}">
         <div class="mb-3">
             <label for="id_cliente" class="form-label">{{ form.cliente.label }}</label>
@@ -26,6 +25,11 @@
         <div class="mb-3">
             <label for="id_hora_fim" class="form-label">{{ form.hora_fim.label }}</label>
             {{ form.hora_fim }}
+        </div>
+
+        <div class="mb-3">
+            <label for="id_hora_fim" class="form-label">{{ form.data.label }}</label>
+            {{ form.data }}
         </div>
     </div>
 

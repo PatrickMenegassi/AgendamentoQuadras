@@ -4,7 +4,12 @@ from ..models import Agendamento, Clientes, Quadra
 class AgendamentoForm(forms.ModelForm):
     class Meta:
         model = Agendamento
-        fields = ['cliente', 'quadra', 'hora_inicio', 'hora_fim']
+        fields = ['cliente', 'quadra', 'data', 'hora_inicio', 'hora_fim']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance:
+            self.fields['data'].widget.attrs['disabled'] = True
 
     cliente = forms.ModelChoiceField(
         label='Cliente',
@@ -22,6 +27,15 @@ class AgendamentoForm(forms.ModelForm):
         widget=forms.Select(attrs={
             'class': 'form-control select2-busca',
         }),
+    )
+
+    data = forms.DateField(
+        label='Data',
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'form-control',
+        }),
+        required=False
     )
     
     hora_inicio = forms.TimeField(
